@@ -13,59 +13,64 @@ namespace Csv2Json
             var fileName = "sample.csv";
             if (args.Length < 1)
             {
-                Console.WriteLine("No file name was given. Using sample.csv file.");
+                Console.WriteLine($"No file name was given. Using {fileName} file.");
             }
             else
             {
                 fileName = args[0];
             }
 
-            var json = ConvertToJson(fileName);
-            ShowJson(json);
+            try
+            {
+                var json = ConvertToJson(fileName);
+                ShowJson(json);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         static string ConvertToJson(string fileName)
         {
-            var holidays = new Dictionary<string, Dictionary<string, string>>();
-            using (var reader = new StreamReader(fileName))
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            var objectCollection = new Dictionary<string, Dictionary<string, string>>();
+            using var reader = new StreamReader(fileName);
+            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+            var lastObjectName = "";
+            while (csv.Read())
             {
-                var lastCountry = "";
-                while (csv.Read())
+                var objectName = csv[0];
+                var propertyName = csv[1];
+                var propertyValue = csv[2];
+                if (!string.IsNullOrWhiteSpace(objectName))
                 {
-                    var country = csv[0];
-                    var date = csv[1];
-                    var holiday = csv[2];
-                    if (!string.IsNullOrWhiteSpace(country))
-                    {
-                        lastCountry = country;
-                        AddCountry(holidays, country);
-                    }
+                    lastObjectName = objectName;
+                    AddCountry(objectCollection, objectName);
+                }
 
-                    if (!string.IsNullOrWhiteSpace(date))
-                    {
-                        AddHoliday(holidays, lastCountry, date, holiday);
-                    }
+                if (!string.IsNullOrWhiteSpace(propertyName))
+                {
+                    AddHoliday(objectCollection, lastObjectName, propertyName, propertyValue);
                 }
             }
 
-            return Newtonsoft.Json.JsonConvert.SerializeObject(holidays);
+            return Newtonsoft.Json.JsonConvert.SerializeObject(objectCollection);
         }
 
-        private static void AddHoliday(Dictionary<string, Dictionary<string, string>> holidays, string lastCountry, string date, string holiday)
+        private static void AddHoliday(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName, string propertyName, string propertyValue)
         {
-            AddCountry(holidays, lastCountry);
-            var existingHolidays = holidays[lastCountry];
+            AddCountry(objectCollection, objectName);
+            var existingHolidays = objectCollection[objectName];
 
-            if (existingHolidays.ContainsKey(date)) return;
+            if (existingHolidays.ContainsKey(propertyName)) return;
 
-            existingHolidays[date] = holiday;
+            existingHolidays[propertyName] = propertyValue;
         }
 
-        private static void AddCountry(Dictionary<string, Dictionary<string, string>> holidays, string country)
+        private static void AddCountry(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName)
         {
-            if (holidays.ContainsKey(country)) return;
-            holidays.Add(country, new Dictionary<string, string>());
+            if (objectCollection.ContainsKey(objectName)) return;
+            objectCollection.Add(objectName, new Dictionary<string, string>());
         }
 
         static void ShowJson(string json)
