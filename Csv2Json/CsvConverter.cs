@@ -7,6 +7,7 @@ namespace Csv2Json
 {
     public static class CsvConverter
     {
+        private const string ConcatenatorString = ",";
         public static string ConvertToJson(string fileName)
         {
             var objectCollection = new Dictionary<string, Dictionary<string, string>>();
@@ -33,21 +34,29 @@ namespace Csv2Json
             return Newtonsoft.Json.JsonConvert.SerializeObject(objectCollection);
         }
 
-        private static void AddProperty(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName, string propertyName, string propertyValue)
+        private static void AddProperty(Dictionary<string, Dictionary<string, string>> objectCollection, 
+                                        string objectName, 
+                                        string propertyName, 
+                                        string propertyValue)
         {
-            AddObject(objectCollection, objectName);
+            EnsureObjectName(objectCollection, objectName);
             var existingProperties = objectCollection[objectName];
 
             if (existingProperties.ContainsKey(propertyName))
             {
                 var existingValue = existingProperties[propertyName];
-                var concatenatedValue = $"{existingValue}, {propertyValue}";
+                var concatenatedValue = $"{existingValue}{ConcatenatorString}{propertyValue}";
                 existingProperties[propertyName] = concatenatedValue;
             }
             else
             {
                 existingProperties[propertyName] = propertyValue;
             }
+        }
+
+        private static void EnsureObjectName(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName)
+        {
+            AddObject(objectCollection, objectName);
         }
 
         private static void AddObject(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName)
