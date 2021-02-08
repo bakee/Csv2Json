@@ -21,29 +21,36 @@ namespace Csv2Json
                 if (!string.IsNullOrWhiteSpace(objectName))
                 {
                     lastObjectName = objectName;
-                    AddCountry(objectCollection, objectName);
+                    AddObject(objectCollection, objectName);
                 }
 
                 if (!string.IsNullOrWhiteSpace(propertyName))
                 {
-                    AddHoliday(objectCollection, lastObjectName, propertyName, propertyValue);
+                    AddProperty(objectCollection, lastObjectName, propertyName, propertyValue);
                 }
             }
 
             return Newtonsoft.Json.JsonConvert.SerializeObject(objectCollection);
         }
 
-        private static void AddHoliday(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName, string propertyName, string propertyValue)
+        private static void AddProperty(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName, string propertyName, string propertyValue)
         {
-            AddCountry(objectCollection, objectName);
-            var existingHolidays = objectCollection[objectName];
+            AddObject(objectCollection, objectName);
+            var existingProperties = objectCollection[objectName];
 
-            if (existingHolidays.ContainsKey(propertyName)) return;
-
-            existingHolidays[propertyName] = propertyValue;
+            if (existingProperties.ContainsKey(propertyName))
+            {
+                var existingValue = existingProperties[propertyName];
+                var concatenatedValue = $"{existingValue}, {propertyValue}";
+                existingProperties[propertyName] = concatenatedValue;
+            }
+            else
+            {
+                existingProperties[propertyName] = propertyValue;
+            }
         }
 
-        private static void AddCountry(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName)
+        private static void AddObject(Dictionary<string, Dictionary<string, string>> objectCollection, string objectName)
         {
             if (objectCollection.ContainsKey(objectName)) return;
             objectCollection.Add(objectName, new Dictionary<string, string>());
